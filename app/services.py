@@ -5,6 +5,7 @@ import openai
 import random
 import builtins
 import os
+import re
 from app.routes import train_lora, check_status, get_result, generate_image,generate_image_result
 from supabase import create_client
 from app.config import Config
@@ -18,6 +19,7 @@ disable_print()
 
 print(f"Supabase URL: {Config.SUPABASE_URL}")  # Debugging line
 print(f"Supabase Key: {Config.SUPABASE_KEY}")  # Debugging line
+
 supabase = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
 
 def insert_training_request(request_id, user_name, trigger_phrase):
@@ -211,24 +213,29 @@ def setup_routes(app):
 
     @app.route('/train', methods=['POST'])
     def train():
-        
+        print('in start')
         if "file" not in request.files:
             return jsonify({"error": "No file uploaded"}), 400
 
         file = request.files["file"]
+        print('passed file')
         trigger_phrase = request.form.get("trigger_phrase", "reva")
-        user_name = request.form.get("user_name", "unknown_user")  # Get user name from frontend
+        print('passed trriger')
+        user_name = request.form.get("user_name", "unknown_user") 
+        print('passed user')# Get user name from frontend
 
         if file.filename == "" or not allowed_file(file.filename):
             return jsonify({"error": "Invalid file type. Only .zip allowed"}), 400
-
+        print('passed if logic')
         # Secure and save the file
         filename = secure_filename(file.filename)
         file_path = os.path.join(UPLOAD_FOLDER, filename)
         file.save(file_path)
         
-        file = request.files["file"]
+        #file = request.files["file"]
         trigger_phrase = request.form.get("trigger_phrase", "reva")
+        print(f"fal_key:{Config.FAL_KEY}")
+        os.environ["FAL_KEY"] = Config.FAL_KEY
         images_data_url = fal_client.upload_file(file_path)
         
 
@@ -255,6 +262,12 @@ def setup_routes(app):
             new_status = result.get("status", "unknown")
             
             completion_percentage = result["logs"][-1]["message"] if result.get("logs") else "0%"
+            #Extract only the percentage value using regex
+            percentage_match = re.search(r'\d+%', completion_percentage)
+            print(percentage_match)
+            # Get the matched value or return "0%" if not found
+            completion_percentage = percentage_match.group(0) if percentage_match else "0%"
+            
             if new_status == "COMPLETED":
                 completion_percentage = "100%"
                 result_json = get_result(request_id)

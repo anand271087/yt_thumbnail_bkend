@@ -1,11 +1,11 @@
 import requests
 from app.config import Config
 
-headers = {"Authorization": f"Key {Config.FAL_API_KEY}"}
+headers = {"Authorization": f"Key {Config.FAL_KEY}"}
 
 def train_lora(images_data_url, trigger_phrase):
     payload = {
-        "steps": 2500,
+        "steps": 10,
         "subject_crop": True,
         "learning_rate": 0.00009,
         "trigger_phrase": trigger_phrase,
@@ -17,7 +17,7 @@ def train_lora(images_data_url, trigger_phrase):
 
 def check_status(request_id):
     response = requests.get(f"{Config.FAL_STATUS_URL}/{request_id}/status?logs=1", headers=headers)
-    return response.json() if response.status_code == 200 else None
+    return response.json() if response.status_code == 200 or response.status_code == 202 else None
 
 def get_result(request_id):
     response = requests.get(f"{Config.FAL_RESULT_URL}/{request_id}", headers=headers)

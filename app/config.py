@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    FAL_API_KEY = os.getenv("FAL_API_KEY", "your-api-key")  # Replace with actual API key
+    FAL_KEY = os.getenv("FAL_API_KEY", "your-api-key")  # Replace with actual API key
     FAL_TRAIN_URL = "https://queue.fal.run/fal-ai/flux-lora-portrait-trainer"
     FAL_STATUS_URL = "https://queue.fal.run/fal-ai/flux-lora-portrait-trainer/requests"
     FAL_RESULT_URL = "https://queue.fal.run/fal-ai/flux-lora-portrait-trainer/requests"
