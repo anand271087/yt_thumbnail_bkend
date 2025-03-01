@@ -5,7 +5,7 @@ headers = {"Authorization": f"Key {Config.FAL_KEY}"}
 
 def train_lora(images_data_url, trigger_phrase):
     payload = {
-        "steps": 10,
+        "steps": 1000,
         "subject_crop": True,
         "learning_rate": 0.00009,
         "trigger_phrase": trigger_phrase,
