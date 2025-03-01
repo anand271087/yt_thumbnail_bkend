@@ -1,0 +1,7 @@
+flask
+fal-client
+supabase
+werkzeug
+requests
+openai
+python-dotenv
