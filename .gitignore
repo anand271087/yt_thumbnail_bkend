@@ -1,4 +1,9 @@
-.env
-__pycache__
-uploads
+# Ignore everything in uploads except .gitkeep
+uploads/*
+!uploads/.gitkeep
+
+# Other ignores
+__pycache__/
 *.pyc
+.env
+.DS_Store
