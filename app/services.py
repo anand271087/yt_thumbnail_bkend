@@ -71,13 +71,14 @@ def update_safe_tensors(request_id, safe_tensors):
 
     return response
 
-def insert_initial_request(request_id, prompt,image_no):
+def insert_initial_request(request_id, prompt,image_no,user_id):
     """Insert request_id, prompt, and status='IN_PROGRESS' into Supabase."""
     data = {
         "request_id": request_id,
         "prompt": prompt,
         "image": image_no,
-        "status": "IN_PROGRESS"  # Set initial status
+        "status": "IN_PROGRESS" , # Set initial status
+        "user_id": user_id
     }
     response = supabase.table("results").insert(data).execute()
     print("Inserted initial request into Supabase:", response)
@@ -96,6 +97,21 @@ def update_generated_image(request_id, image_url, width, height,image_no):
         .eq("image", image_no) \
         .execute()
     print("Updated generated image details in Supabase:", response)
+    
+def get_user_id(email):
+    """Fetch the user_id from Supabase Auth table using the email."""
+    response = supabase.table("user_emails") \
+        .select("id") \
+        .eq("email", email) \
+        .execute()
+
+    if response.data and len(response.data) > 0:
+        user_id = response.data[0]["id"]
+        print("Fetched user_id from Supabase:", user_id)
+        return user_id
+    else:
+        print("No user found with that email.")
+        return None
     
 def insert_trigger_phrase_naturally(generated_prompt, trigger_phrase):
     """Insert trigger_phrase at the beginning or middle in a meaningful way."""
@@ -291,15 +307,20 @@ def setup_routes(app):
 
     @app.route('/generate_image', methods=['POST'])
     def generate():
+        print('inside generate')
         data = request.get_json()
+        print(data)
         request_id = data.get("request_id")
         youtube_title = data.get("prompt")
         gender_type = data.get("gender")
+        email = data.get("email")
         
+        print('email', email)
         trigger_phrase = get_trigger_phrase(request_id)
-
+        user_id = get_user_id(email)
+        print('user_id', user_id)
         num_images = 2
-        if not request_id or not youtube_title or not gender_type:
+        if not request_id or not youtube_title or not gender_type or not email:
             return jsonify({"error": "request_id and youtube_title and gender_type are required"}), 400
         
         prompt = generate_gpt4o_prompt(youtube_title,trigger_phrase,gender_type)
@@ -312,7 +333,7 @@ def setup_routes(app):
             request_id = result.get("request_id", "Request ID not found")
             
             for image_no in range(1, num_images + 1):
-                insert_initial_request(request_id,prompt,image_no)
+                insert_initial_request(request_id,prompt,image_no,user_id)
         else:
             return jsonify({"error": "Image generation failed"}), 500
         return jsonify(result) 
