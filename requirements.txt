@@ -5,3 +5,4 @@ werkzeug
 requests
 openai
 python-dotenv
+flask-cors
