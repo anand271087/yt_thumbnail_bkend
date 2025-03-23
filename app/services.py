@@ -17,16 +17,13 @@ def disable_print():
 # Disable print in production
 disable_print()
 
-print(f"Supabase URL: {Config.SUPABASE_URL}")  # Debugging line
-print(f"Supabase Key: {Config.SUPABASE_KEY}")  # Debugging line
-
 supabase = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
 
-def insert_training_request(request_id, user_name, trigger_phrase):
+def insert_training_request(request_id, user_id, trigger_phrase):
     """Insert training request details into Supabase."""
     data = {
         "request_id": request_id,
-        "user_name": user_name,
+        "user_id": user_id,
         "trigger_phrase": trigger_phrase,
         "status": "In_Queue"
     }
@@ -237,8 +234,8 @@ def setup_routes(app):
         print('passed file')
         trigger_phrase = request.form.get("trigger_phrase", "reva")
         print('passed trriger')
-        user_name = request.form.get("user_name", "unknown_user") 
-        print('passed user')# Get user name from frontend
+        email = request.form.get("email", "unknown@unknown.com") 
+        print('passed email')# Get user name from frontend
 
         if file.filename == "" or not allowed_file(file.filename):
             return jsonify({"error": "Invalid file type. Only .zip allowed"}), 400
@@ -254,6 +251,7 @@ def setup_routes(app):
         os.environ["FAL_KEY"] = Config.FAL_KEY
         images_data_url = fal_client.upload_file(file_path)
         
+        user_id = get_user_id(email)
 
         if not images_data_url:
             return jsonify({"error": "images_data_url is required"}), 400
@@ -262,7 +260,7 @@ def setup_routes(app):
         if result:        
             request_id = result.get("request_id")
             # Insert training details into Supabase
-            insert_response = insert_training_request(request_id, user_name, trigger_phrase)
+            insert_response = insert_training_request(request_id, user_id, trigger_phrase)
             print("Inserted into Supabase:", insert_response)
             return jsonify({"message": "Training started", "request_id": result.get("request_id")}), 202
         else:
